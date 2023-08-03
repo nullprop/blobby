@@ -1,0 +1,2 @@
+-Ithirdparty/build/include/
+-Ithirdparty/build/include/SDL2/
