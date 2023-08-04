@@ -6,27 +6,36 @@
 #include <SDL.h>
 #include <SDL_syswm.h>
 
+#include <cmath>
 #include <imgui.h>
 
 #include "bgfx-imgui/imgui_impl_bgfx.h"
 #include "file-ops.h"
 #include "sdl-imgui/imgui_impl_sdl2.h"
 
-struct PosVertex
+struct Vertex
 {
     float x;
     float y;
     float z;
 };
 
-static PosVertex cube_vertices[] = {
-    {-1.0f, 1.0f, 1.0f},  {1.0f, 1.0f, 1.0f},  {-1.0f, -1.0f, 1.0f},  {1.0f, -1.0f, 1.0f},
-    {-1.0f, 1.0f, -1.0f}, {1.0f, 1.0f, -1.0f}, {-1.0f, -1.0f, -1.0f}, {1.0f, -1.0f, -1.0f},
+struct Vec4
+{
+    float x;
+    float y;
+    float z;
+    float w;
 };
 
-static const uint16_t cube_tri_list[] = {
-    0, 1, 2, 1, 3, 2, 4, 6, 5, 5, 6, 7, 0, 2, 4, 4, 2, 6, 1, 5, 3, 5, 7, 3, 0, 4, 1, 4, 5, 1, 2, 3, 6, 6, 3, 7,
+static Vertex screen_vertices[] = {
+    {-1.0f, -1.0f, 0.0f}, // tl
+    {1.0f, -1.0f, 0.0f},  // tr
+    {1.0f, 1.0f, 0.0f},   // br
+    {-1.0f, 1.0f, 0.0f},  // bl
 };
+static const uint16_t screen_tri_list[] = {0, 1, 2, 0, 2, 3};
+// static const uint16_t screen_tri_list[] = {0, 1, 2, 3, 0}; // interleaved
 
 static float m_time = 0.0f;
 static float m_timeScale = 1.0f;
@@ -47,6 +56,7 @@ struct context_t
     bgfx::IndexBufferHandle ibh = BGFX_INVALID_HANDLE;
 
     bgfx::UniformHandle u_globals = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle u_positions = BGFX_INVALID_HANDLE;
 
     float cam_pitch = 0.0f;
     float cam_yaw = 0.0f;
@@ -72,8 +82,21 @@ void main_loop(void* data)
     const double freq = double(bx::getHPFrequency());
     const float deltaTime = float(frameTime / freq);
     m_time += m_timeScale * deltaTime;
+
     float globals[4] = {m_time, 0, 0, 0};
-    bgfx::setUniform(context->u_globals, globals);
+    bgfx::setUniform(context->u_globals, globals, 1);
+
+    Vec4 positions[16] = {};
+    for (int i = 0; i < 16; i++)
+    {
+        positions[i] = {
+            ((float)i - 8.0f) * 0.8f,
+            sin(i * m_time * 0.1f),
+            0,
+            0
+            };
+    }
+    bgfx::setUniform(context->u_positions, positions, 16);
 
     for (SDL_Event current_event; SDL_PollEvent(&current_event) != 0;)
     {
@@ -113,7 +136,7 @@ void main_loop(void* data)
     bx::mtxRotateXYZ(cam_rotation, context->cam_pitch, context->cam_yaw, 0.0f);
 
     float cam_translation[16];
-    bx::mtxTranslate(cam_translation, 0.0f, 0.0f, -5.0f);
+    bx::mtxTranslate(cam_translation, 0.0f, 0.0f, -8.0f);
 
     float cam_transform[16];
     bx::mtxMul(cam_transform, cam_translation, cam_rotation);
@@ -178,7 +201,8 @@ int main(int argc, char** argv)
 #endif
 
     bgfx::Init bgfx_init;
-    bgfx_init.type = bgfx::RendererType::Count; // auto choose renderer
+    // bgfx_init.type = bgfx::RendererType::Count; // auto choose renderer
+    bgfx_init.type = bgfx::RendererType::OpenGL;
     bgfx_init.resolution.width = width;
     bgfx_init.resolution.height = height;
     bgfx_init.resolution.reset = BGFX_RESET_VSYNC;
@@ -191,19 +215,22 @@ int main(int argc, char** argv)
     ImGui::CreateContext();
 
     ImGui_Implbgfx_Init(255);
+
+    // TODO: use type from bgfx::RenderType?
 #if BX_PLATFORM_WINDOWS
     ImGui_ImplSDL2_InitForD3D(window);
 #elif BX_PLATFORM_OSX
     ImGui_ImplSDL2_InitForMetal(window);
 #elif BX_PLATFORM_LINUX
-    ImGui_ImplSDL2_InitForOpenGL(window, nullptr);
+    // ImGui_ImplSDL2_InitForOpenGL(window, nullptr);
+    ImGui_ImplSDL2_InitForVulkan(window);
 #endif
 
     bgfx::VertexLayout pos_col_vert_layout;
     pos_col_vert_layout.begin().add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float).end();
     bgfx::VertexBufferHandle vbh =
-        bgfx::createVertexBuffer(bgfx::makeRef(cube_vertices, sizeof(cube_vertices)), pos_col_vert_layout);
-    bgfx::IndexBufferHandle ibh = bgfx::createIndexBuffer(bgfx::makeRef(cube_tri_list, sizeof(cube_tri_list)));
+        bgfx::createVertexBuffer(bgfx::makeRef(screen_vertices, sizeof(screen_vertices)), pos_col_vert_layout);
+    bgfx::IndexBufferHandle ibh = bgfx::createIndexBuffer(bgfx::makeRef(screen_tri_list, sizeof(screen_tri_list)));
 
     const std::string shader_root = "shader/build/";
 
@@ -238,11 +265,15 @@ int main(int argc, char** argv)
     context.ibh = ibh;
 
     context.u_globals = bgfx::createUniform("u_globals", bgfx::UniformType::Vec4, 1);
+    context.u_positions = bgfx::createUniform("u_positions", bgfx::UniformType::Vec4, 16);
 
     while (!context.quit)
     {
         main_loop(&context);
     }
+
+    bgfx::destroy(context.u_positions);
+    bgfx::destroy(context.u_globals);
 
     bgfx::destroy(vbh);
     bgfx::destroy(ibh);
