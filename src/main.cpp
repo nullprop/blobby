@@ -1,6 +1,7 @@
 #include <bgfx/bgfx.h>
 #include <bgfx/platform.h>
 #include <bx/math.h>
+#include <bx/timer.h>
 
 #include <SDL.h>
 #include <SDL_syswm.h>
@@ -11,23 +12,24 @@
 #include "file-ops.h"
 #include "sdl-imgui/imgui_impl_sdl2.h"
 
-struct PosColorVertex
+struct PosVertex
 {
     float x;
     float y;
     float z;
-    uint32_t abgr;
 };
 
-static PosColorVertex cube_vertices[] = {
-    {-1.0f, 1.0f, 1.0f, 0xff000000},   {1.0f, 1.0f, 1.0f, 0xff0000ff},   {-1.0f, -1.0f, 1.0f, 0xff00ff00},
-    {1.0f, -1.0f, 1.0f, 0xff00ffff},   {-1.0f, 1.0f, -1.0f, 0xffff0000}, {1.0f, 1.0f, -1.0f, 0xffff00ff},
-    {-1.0f, -1.0f, -1.0f, 0xffffff00}, {1.0f, -1.0f, -1.0f, 0xffffffff},
+static PosVertex cube_vertices[] = {
+    {-1.0f, 1.0f, 1.0f},  {1.0f, 1.0f, 1.0f},  {-1.0f, -1.0f, 1.0f},  {1.0f, -1.0f, 1.0f},
+    {-1.0f, 1.0f, -1.0f}, {1.0f, 1.0f, -1.0f}, {-1.0f, -1.0f, -1.0f}, {1.0f, -1.0f, -1.0f},
 };
 
 static const uint16_t cube_tri_list[] = {
     0, 1, 2, 1, 3, 2, 4, 6, 5, 5, 6, 7, 0, 2, 4, 4, 2, 6, 1, 5, 3, 5, 7, 3, 0, 4, 1, 4, 5, 1, 2, 3, 6, 6, 3, 7,
 };
+
+static float m_time = 0.0f;
+static float m_timeScale = 1.0f;
 
 static bgfx::ShaderHandle create_shader(const std::string& shader, const char* name)
 {
@@ -43,6 +45,8 @@ struct context_t
     bgfx::ProgramHandle program = BGFX_INVALID_HANDLE;
     bgfx::VertexBufferHandle vbh = BGFX_INVALID_HANDLE;
     bgfx::IndexBufferHandle ibh = BGFX_INVALID_HANDLE;
+
+    bgfx::UniformHandle u_globals = BGFX_INVALID_HANDLE;
 
     float cam_pitch = 0.0f;
     float cam_yaw = 0.0f;
@@ -60,6 +64,16 @@ struct context_t
 void main_loop(void* data)
 {
     auto context = static_cast<context_t*>(data);
+
+    int64_t now = bx::getHPCounter();
+    static int64_t last = now;
+    const int64_t frameTime = now - last;
+    last = now;
+    const double freq = double(bx::getHPFrequency());
+    const float deltaTime = float(frameTime / freq);
+    m_time += m_timeScale * deltaTime;
+    float globals[4] = {m_time, 0, 0, 0};
+    bgfx::setUniform(context->u_globals, globals);
 
     for (SDL_Event current_event; SDL_PollEvent(&current_event) != 0;)
     {
@@ -133,8 +147,8 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    const int width = 800;
-    const int height = 600;
+    const int width = 1280;
+    const int height = 720;
     SDL_Window* window =
         SDL_CreateWindow(argv[0], SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
 
@@ -186,10 +200,7 @@ int main(int argc, char** argv)
 #endif
 
     bgfx::VertexLayout pos_col_vert_layout;
-    pos_col_vert_layout.begin()
-        .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-        .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
-        .end();
+    pos_col_vert_layout.begin().add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float).end();
     bgfx::VertexBufferHandle vbh =
         bgfx::createVertexBuffer(bgfx::makeRef(cube_vertices, sizeof(cube_vertices)), pos_col_vert_layout);
     bgfx::IndexBufferHandle ibh = bgfx::createIndexBuffer(bgfx::makeRef(cube_tri_list, sizeof(cube_tri_list)));
@@ -225,6 +236,8 @@ int main(int argc, char** argv)
     context.window = window;
     context.vbh = vbh;
     context.ibh = ibh;
+
+    context.u_globals = bgfx::createUniform("u_globals", bgfx::UniformType::Vec4, 1);
 
     while (!context.quit)
     {
