@@ -2,21 +2,35 @@
 
 #include <SDL.h>
 
+#include "math.h"
+
 namespace organic
 {
     class Renderer;
+
+    enum Keys
+    {
+        FORWARD = 0x00000001,
+        BACK = 0x00000010,
+        RIGHT = 0x00000100,
+        LEFT = 0x00001000,
+        UP = 0x00010000,
+        DOWN = 0x00100000,
+    };
 
     struct Context
     {
         SDL_Window* window = nullptr;
         Renderer* renderer = nullptr;
 
-        float cam_pitch = 0.0f;
-        float cam_yaw = 0.0f;
-        float rot_scale = 0.01f;
+        float camPitch = 0.0f;
+        float camYaw = 0.0f;
+        float sensitivity = 1.4f;
+        Vec3 camPosition = {0.0f, 0.0f, -8.0f};
+        float camSpeed = 5.0f;
+        int keyFlags;
 
-        int prev_mouse_x = 0;
-        int prev_mouse_y = 0;
+        float camTransform[16];
 
         int width = 0;
         int height = 0;

@@ -1,6 +1,12 @@
-#include "renderer.h"
+#include <bx/math.h>
+#include <imgui.h>
+
+#include "bgfx-imgui/imgui_impl_bgfx.h"
+#include "sdl-imgui/imgui_impl_sdl2.h"
+
 #include "blob.h"
 #include "file-ops.h"
+#include "renderer.h"
 
 namespace organic
 {
@@ -91,22 +97,21 @@ namespace organic
             j++;
         }
 
-        // Camera
-        float cam_rotation[16];
-        bx::mtxRotateXYZ(cam_rotation, context->cam_pitch, context->cam_yaw, 0.0f);
+        // imgui
+        ImGui_Implbgfx_NewFrame();
+        ImGui_ImplSDL2_NewFrame();
 
-        float cam_translation[16];
-        bx::mtxTranslate(cam_translation, 0.0f, 0.0f, -8.0f);
-
-        float cam_transform[16];
-        bx::mtxMul(cam_transform, cam_translation, cam_rotation);
+        ImGui::NewFrame();
+        ImGui::ShowDemoWindow(); // your drawing here
+        ImGui::Render();
+        ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
 
         // Matrices
         float view[16];
-        bx::mtxInverse(view, cam_transform);
+        bx::mtxInverse(view, context->camTransform);
 
         float proj[16];
-        bx::mtxProj(proj, 60.0f, float(context->width) / float(context->height), 0.1f, 100.0f,
+        bx::mtxProj(proj, 75.0f, float(context->width) / float(context->height), 0.1f, 100.0f,
                     bgfx::getCaps()->homogeneousDepth);
 
         bgfx::setViewTransform(0, view, proj);

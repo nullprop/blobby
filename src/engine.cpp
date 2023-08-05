@@ -3,18 +3,22 @@
 #include <bx/math.h>
 #include <bx/timer.h>
 
+#include <SDL_events.h>
+#include <SDL_mouse.h>
+#include <SDL_scancode.h>
+#include <SDL_stdinc.h>
 #include <SDL_syswm.h>
+#include <SDL_video.h>
 
 #include <cmath>
 #include <imgui.h>
 
 #include "bgfx-imgui/imgui_impl_bgfx.h"
-#include "file-ops.h"
-#include "sdl-imgui/imgui_impl_sdl2.h"
-
 #include "engine.h"
+#include "file-ops.h"
 #include "math.h"
 #include "renderer.h"
+#include "sdl-imgui/imgui_impl_sdl2.h"
 
 namespace organic
 {
@@ -37,6 +41,8 @@ namespace organic
             printf("Window could not be created. SDL_Error: %s\n", SDL_GetError());
             throw("Failed to create Engine");
         }
+
+        SDL_SetRelativeMouseMode(SDL_TRUE);
 
         SDL_SysWMinfo wmi;
         SDL_VERSION(&wmi.version);
@@ -130,31 +136,115 @@ namespace organic
                 m_context.quit = true;
                 break;
             }
-        }
 
-        ImGui_Implbgfx_NewFrame();
-        ImGui_ImplSDL2_NewFrame();
-
-        ImGui::NewFrame();
-        ImGui::ShowDemoWindow(); // your drawing here
-        ImGui::Render();
-        ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
-
-        if (!ImGui::GetIO().WantCaptureMouse)
-        {
-            // simple input code for orbit camera
-            int mouse_x, mouse_y;
-            const int buttons = SDL_GetMouseState(&mouse_x, &mouse_y);
-            if ((buttons & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0)
+            if (current_event.type == SDL_KEYDOWN)
             {
-                int delta_x = mouse_x - m_context.prev_mouse_x;
-                int delta_y = mouse_y - m_context.prev_mouse_y;
-                m_context.cam_yaw += float(-delta_x) * m_context.rot_scale;
-                m_context.cam_pitch += float(-delta_y) * m_context.rot_scale;
+                switch (current_event.key.keysym.scancode)
+                {
+                case SDL_SCANCODE_ESCAPE:
+                    m_context.quit = true;
+                    break;
+
+                case SDL_SCANCODE_W:
+                    m_context.keyFlags |= Keys::FORWARD;
+                    break;
+
+                case SDL_SCANCODE_S:
+                    m_context.keyFlags |= Keys::BACK;
+                    break;
+
+                case SDL_SCANCODE_A:
+                    m_context.keyFlags |= Keys::LEFT;
+                    break;
+
+                case SDL_SCANCODE_D:
+                    m_context.keyFlags |= Keys::RIGHT;
+                    break;
+
+                case SDL_SCANCODE_SPACE:
+                    m_context.keyFlags |= Keys::UP;
+                    break;
+
+                case SDL_SCANCODE_LCTRL:
+                case SDL_SCANCODE_LSHIFT:
+                    m_context.keyFlags |= Keys::DOWN;
+                    break;
+
+                default:
+                    break;
+                }
+
+                if (m_context.quit)
+                    break;
             }
-            m_context.prev_mouse_x = mouse_x;
-            m_context.prev_mouse_y = mouse_y;
+
+            if (current_event.type == SDL_KEYUP)
+            {
+                switch (current_event.key.keysym.scancode)
+                {
+                case SDL_SCANCODE_W:
+                    m_context.keyFlags &= ~Keys::FORWARD;
+                    break;
+
+                case SDL_SCANCODE_S:
+                    m_context.keyFlags &= ~Keys::BACK;
+                    break;
+
+                case SDL_SCANCODE_A:
+                    m_context.keyFlags &= ~Keys::LEFT;
+                    break;
+
+                case SDL_SCANCODE_D:
+                    m_context.keyFlags &= ~Keys::RIGHT;
+                    break;
+
+                case SDL_SCANCODE_SPACE:
+                    m_context.keyFlags &= ~Keys::UP;
+                    break;
+
+                case SDL_SCANCODE_LCTRL:
+                case SDL_SCANCODE_LSHIFT:
+                    m_context.keyFlags &= ~Keys::DOWN;
+                    break;
+
+                default:
+                    break;
+                }
+            }
+
+            if (current_event.type == SDL_MOUSEMOTION)
+            {
+                m_context.camYaw -= float(current_event.motion.xrel) * m_context.sensitivity * 0.022f;
+                m_context.camYaw = fmodf(m_context.camYaw, 360.0f);
+
+                m_context.camPitch -= float(current_event.motion.yrel) * m_context.sensitivity * 0.022f;
+                m_context.camPitch = clamp(m_context.camPitch, -89.0f, 89.0f);
+            }
         }
+
+        bx::Vec3 wishMove = {0, 0, 0};
+        if ((m_context.keyFlags & Keys::FORWARD) != 0)
+            wishMove.z += m_context.deltaTime * m_context.camSpeed;
+        if ((m_context.keyFlags & Keys::BACK) != 0)
+            wishMove.z -= m_context.deltaTime * m_context.camSpeed;
+        if ((m_context.keyFlags & Keys::RIGHT) != 0)
+            wishMove.x += m_context.deltaTime * m_context.camSpeed;
+        if ((m_context.keyFlags & Keys::LEFT) != 0)
+            wishMove.x -= m_context.deltaTime * m_context.camSpeed;
+        if ((m_context.keyFlags & Keys::UP) != 0)
+            wishMove.y += m_context.deltaTime * m_context.camSpeed;
+        if ((m_context.keyFlags & Keys::DOWN) != 0)
+            wishMove.y -= m_context.deltaTime * m_context.camSpeed;
+
+        float camRotation[16];
+        float camTranslation[16];
+        bx::mtxRotateXYZ(camRotation, bx::toRad(m_context.camPitch), bx::toRad(m_context.camYaw), 0.0f);
+        wishMove = bx::mul(wishMove, camRotation);
+        m_context.camPosition.x += wishMove.x;
+        m_context.camPosition.y += wishMove.y;
+        m_context.camPosition.z += wishMove.z;
+        bx::mtxTranslate(camTranslation, m_context.camPosition.x, m_context.camPosition.y, m_context.camPosition.z);
+        bx::mtxMul(m_context.camTransform, camRotation, camTranslation);
 
         m_context.renderer->Loop(&m_context);
     }
