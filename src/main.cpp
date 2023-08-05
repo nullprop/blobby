@@ -93,7 +93,7 @@ void main_loop(void* data)
             ((float)i - 8.0f),
             sin(i * m_time * 0.1f),
             0,
-            0
+            0.2f + abs(sin(i * m_time * 0.05f)) * 0.5f
             };
     }
     bgfx::setUniform(context->u_positions, positions, 16);

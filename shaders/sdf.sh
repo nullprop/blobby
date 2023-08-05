@@ -29,7 +29,7 @@ float get_dist(vec3 p)
             sdf_sphere(
                 p,
                 u_positions[i].xyz,
-                0.5
+                u_positions[i].w
             ),
             SMOOTHNESS
         );
