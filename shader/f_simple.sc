@@ -9,7 +9,7 @@ uniform vec4 u_positions[MAX_SDF];
 const int MAX_STEPS = 100;
 const float MAX_DIST = 100.0;
 const float SURF_DIST = 0.01;
-const float SMOOTHNESS = 0.5;
+const float SMOOTHNESS = 1.0;
 const float RIM_GRADIENT = 0.6;
 
 // https://iquilezles.org/articles/palettes/

@@ -90,7 +90,7 @@ void main_loop(void* data)
     for (int i = 0; i < 16; i++)
     {
         positions[i] = {
-            ((float)i - 8.0f) * 0.8f,
+            ((float)i - 8.0f),
             sin(i * m_time * 0.1f),
             0,
             0
