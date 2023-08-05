@@ -232,7 +232,7 @@ int main(int argc, char** argv)
         bgfx::createVertexBuffer(bgfx::makeRef(screen_vertices, sizeof(screen_vertices)), pos_col_vert_layout);
     bgfx::IndexBufferHandle ibh = bgfx::createIndexBuffer(bgfx::makeRef(screen_tri_list, sizeof(screen_tri_list)));
 
-    const std::string shader_root = "shader/build/";
+    const std::string shader_root = "shaders/build/";
 
     std::string vshader;
     if (!fileops::read_file(shader_root + "v_simple.bin", vshader))
