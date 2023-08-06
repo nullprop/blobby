@@ -34,7 +34,7 @@ namespace organic
         }
 
         SDL_Window* window = SDL_CreateWindow("organic", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width,
-                                              height, SDL_WINDOW_SHOWN);
+                                              height, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
 
         if (window == nullptr)
         {

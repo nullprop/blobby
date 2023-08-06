@@ -1,4 +1,4 @@
-const int MAX_SDF = 16;
+const int MAX_SDF = 512;
 uniform vec4 u_positions[MAX_SDF];
 
 const int MAX_STEPS = 100;
@@ -22,15 +22,16 @@ float get_dist(vec3 p)
 {
     float field = MAX_DIST;
 
-    for (int i = 0; i < MAX_SDF; i++)
+    for (int i = 0; i < int(u_globals[1]); i++)
     {
+        float dist = sdf_sphere(
+            p,
+            u_positions[i].xyz,
+            u_positions[i].w
+        );
         field = smooth_union(
             field,
-            sdf_sphere(
-                p,
-                u_positions[i].xyz,
-                u_positions[i].w
-            ),
+            dist,
             SMOOTHNESS
         );
     }

@@ -1,4 +1,4 @@
-// time, 0, 0, 0
+// time, num sdfs, 0, 0
 uniform vec4 u_globals;
 
 float rand(vec2 co)

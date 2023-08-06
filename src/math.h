@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cmath>
+
 namespace organic
 {
     struct Vec3
@@ -7,6 +9,15 @@ namespace organic
         float x;
         float y;
         float z;
+
+        Vec3 operator-(const Vec3& other)
+        {
+            return {
+                this->x - other.x,
+                this->y - other.y,
+                this->z - other.z,
+            };
+        }
     };
 
     struct Vec4
@@ -24,5 +35,20 @@ namespace organic
         if (f > max)
             return max;
         return f;
+    }
+
+    static float lengthSquared(Vec3 a)
+    {
+        return powf(a.x, 2) + powf(a.y, 2) + powf(a.z, 2);
+    }
+
+    static float length(Vec3 a)
+    {
+        return sqrtf(lengthSquared(a));
+    }
+
+    static float distance(Vec3 a, Vec3 b)
+    {
+        return length(b - a);
     }
 }

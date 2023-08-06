@@ -1,10 +1,13 @@
+#include <algorithm>
 #include <bx/math.h>
 #include <imgui.h>
+#include <vector>
 
 #include "bgfx-imgui/imgui_impl_bgfx.h"
 #include "sdl-imgui/imgui_impl_sdl2.h"
 
 #include "blob.h"
+#include "constants.h"
 #include "file-ops.h"
 #include "renderer.h"
 
@@ -69,7 +72,7 @@ namespace organic
         m_ibh = ibh;
 
         m_u_globals = bgfx::createUniform("u_globals", bgfx::UniformType::Vec4, 1);
-        m_u_positions = bgfx::createUniform("u_positions", bgfx::UniformType::Vec4, 16);
+        m_u_positions = bgfx::createUniform("u_positions", bgfx::UniformType::Vec4, MAX_SDF);
 
         m_valid = true;
     }
@@ -111,7 +114,7 @@ namespace organic
         bx::mtxInverse(view, context->camTransform);
 
         float proj[16];
-        bx::mtxProj(proj, 75.0f, float(context->width) / float(context->height), 0.1f, 100.0f,
+        bx::mtxProj(proj, 75.0f, float(context->width) / float(context->height), NEAR_PLANE, FAR_PLANE,
                     bgfx::getCaps()->homogeneousDepth);
 
         bgfx::setViewTransform(0, view, proj);
@@ -121,19 +124,32 @@ namespace organic
         bgfx::setTransform(model);
 
         // Uniforms
-        float globals[4] = {context->time, 0, 0, 0};
-        bgfx::setUniform(m_u_globals, globals, 1);
+        int maxSDF = m_blobs.size();
+        if (maxSDF > MAX_SDF)
+        {
+            printf("Exceeded max SDF limit, some will not be rendered! (%d/%d)", maxSDF, MAX_SDF);
+            maxSDF = MAX_SDF;
+        }
 
-        organic::Vec4 positions[16] = {};
-        int i = 0;
+        std::vector<Vec4> positions = std::vector<Vec4>(maxSDF);
+        int numSDF = 0;
         for (Blob& blob : m_blobs)
         {
-            positions[i] = {blob.Position.x, blob.Position.y, blob.Position.z, blob.Radius};
-            i++;
-            if (i >= 16)
+            // Distance cull
+            if (distance(blob.Position, context->camPosition) > FAR_PLANE + blob.Radius)
+                continue;
+
+            // TODO: frustrum cull
+
+            positions[numSDF] = {blob.Position.x, blob.Position.y, blob.Position.z, blob.Radius};
+            numSDF++;
+            if (numSDF >= maxSDF)
                 break;
         }
-        bgfx::setUniform(m_u_positions, positions, 16);
+
+        float globals[4] = {context->time, (float)numSDF, 0, 0};
+        bgfx::setUniform(m_u_globals, globals, 1);
+        bgfx::setUniform(m_u_positions, &positions[0], numSDF);
 
         // Buffers
         bgfx::setVertexBuffer(0, m_vbh);
