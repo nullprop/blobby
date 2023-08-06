@@ -7,6 +7,7 @@
 namespace organic
 {
     class Renderer;
+    class Terrain;
 
     enum Keys
     {
@@ -22,6 +23,7 @@ namespace organic
     {
         SDL_Window* window = nullptr;
         Renderer* renderer = nullptr;
+        Terrain* terrain = nullptr;
 
         float camPitch = 0.0f;
         float camYaw = 0.0f;

@@ -19,6 +19,7 @@
 #include "math.h"
 #include "renderer.h"
 #include "sdl-imgui/imgui_impl_sdl2.h"
+#include "terrain.h"
 
 namespace organic
 {
@@ -94,6 +95,7 @@ namespace organic
         m_context.height = height;
         m_context.window = window;
         m_context.renderer = new Renderer();
+        m_context.terrain = new Terrain(0);
 
         if (m_context.renderer->IsValid())
         {
@@ -106,6 +108,7 @@ namespace organic
 
     Engine::~Engine()
     {
+        delete m_context.terrain;
         delete m_context.renderer;
 
         ImGui_ImplSDL2_Shutdown();

@@ -20,6 +20,7 @@ target_sources(${PROJECT_NAME} PRIVATE
   src/main.cpp
   src/engine.cpp
   src/renderer.cpp
+  src/terrain.cpp
   src/sdl-imgui/imgui_impl_sdl2.cpp
   src/bgfx-imgui/imgui_impl_bgfx.cpp)
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)

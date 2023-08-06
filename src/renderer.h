@@ -12,6 +12,7 @@
 #include "blob.h"
 #include "context.h"
 #include "math.h"
+#include "terrain.h"
 
 namespace organic
 {
@@ -23,17 +24,12 @@ namespace organic
 
         void Loop(Context* context);
 
-        void AddBlobs(std::vector<Blob> blobs);
-        void RemoveBlob(Blob blob);
-
         bool IsValid()
         {
             return m_valid;
         }
 
       private:
-        std::list<Blob> m_blobs;
-
         bgfx::ProgramHandle m_program = BGFX_INVALID_HANDLE;
         bgfx::VertexBufferHandle m_vbh = BGFX_INVALID_HANDLE;
         bgfx::IndexBufferHandle m_ibh = BGFX_INVALID_HANDLE;

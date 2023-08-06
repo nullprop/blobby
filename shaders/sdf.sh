@@ -7,15 +7,34 @@ const float SURF_DIST = 0.01;
 
 const float SMOOTHNESS = 1.0;
 
+// https://iquilezles.org/articles/distfunctions/
 float sdf_sphere(vec3 p, vec3 sp, float r)
 {
     return length(sp - p) - r;
+}
+
+float sdf_box(vec3 p, vec3 sp, vec3 b)
+{
+    vec3 q = abs(sp - p) - b;
+    return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
 }
 
 float smooth_union(float d1, float d2, float k)
 {
     float h = clamp(0.5 + 0.5 * (d2 - d1) / k, 0.0, 1.0);
     return mix(d2, d1, h) - k * h * (1.0 - h);
+}
+
+float smooth_subtraction(float d1, float d2, float k)
+{
+    float h = clamp(0.5 - 0.5 * (d2 + d1) / k, 0.0, 1.0);
+    return mix(d2, -d1, h) + k * h * (1.0 - h);
+}
+
+float smooth_intersection(float d1, float d2, float k)
+{
+    float h = clamp(0.5 - 0.5 * (d2 - d1) / k, 0.0, 1.0);
+    return mix(d2, d1, h) + k * h * (1.0 - h);
 }
 
 float get_dist(vec3 p)

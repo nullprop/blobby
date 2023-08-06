@@ -31,12 +31,6 @@ namespace organic
 
     Renderer::Renderer()
     {
-        m_blobs = std::list<Blob>();
-        for (int i = 0; i < 16; i++)
-        {
-            m_blobs.emplace_back((float)i, 0, 0, 0.5);
-        }
-
         bgfx::VertexLayout pos_col_vert_layout;
         pos_col_vert_layout.begin().add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float).end();
         bgfx::VertexBufferHandle vbh =
@@ -89,17 +83,6 @@ namespace organic
 
     void Renderer::Loop(Context* context)
     {
-        // TEST
-        int j = 0;
-        for (Blob& blob : m_blobs)
-        {
-            blob.Position.x = (float)j - 8.0f;
-            blob.Position.y = sin(j * context->time * 0.1f);
-            blob.Position.z = 0;
-            blob.Radius = 0.2f + abs(sin(j * context->time * 0.05f)) * 0.5f;
-            j++;
-        }
-
         // imgui
         ImGui_Implbgfx_NewFrame();
         ImGui_ImplSDL2_NewFrame();
@@ -123,28 +106,22 @@ namespace organic
         bx::mtxIdentity(model);
         bgfx::setTransform(model);
 
+        // Update terrain culling
+        context->terrain->Update(context, proj);
+
         // Uniforms
-        int maxSDF = m_blobs.size();
-        if (maxSDF > MAX_SDF)
+        std::vector<Blob*> blobs = context->terrain->GetBlobsToRender();
+        int numSDF = blobs.size();
+        if (numSDF > MAX_SDF)
         {
-            printf("Exceeded max SDF limit, some will not be rendered! (%d/%d)", maxSDF, MAX_SDF);
-            maxSDF = MAX_SDF;
+            printf("Exceeded max SDF limit, some will not be rendered! (%d/%d)\n", numSDF, MAX_SDF);
+            numSDF = MAX_SDF;
         }
 
-        std::vector<Vec4> positions = std::vector<Vec4>(maxSDF);
-        int numSDF = 0;
-        for (Blob& blob : m_blobs)
+        std::vector<Vec4> positions = std::vector<Vec4>(numSDF);
+        for (int i = 0; i < numSDF; i++)
         {
-            // Distance cull
-            if (distance(blob.Position, context->camPosition) > FAR_PLANE + blob.Radius)
-                continue;
-
-            // TODO: frustrum cull
-
-            positions[numSDF] = {blob.Position.x, blob.Position.y, blob.Position.z, blob.Radius};
-            numSDF++;
-            if (numSDF >= maxSDF)
-                break;
+            positions[i] = {blobs[i]->Position.x, blobs[i]->Position.y, blobs[i]->Position.z, blobs[i]->Radius};
         }
 
         float globals[4] = {context->time, (float)numSDF, 0, 0};
@@ -158,15 +135,5 @@ namespace organic
         // Draw
         bgfx::submit(0, m_program);
         bgfx::frame();
-    }
-
-    void Renderer::AddBlobs(std::vector<Blob> blobs)
-    {
-        m_blobs.insert(m_blobs.end(), blobs.begin(), blobs.end());
-    }
-
-    void Renderer::RemoveBlob(Blob blob)
-    {
-        m_blobs.remove(blob);
     }
 }
