@@ -6,7 +6,8 @@ namespace organic
 {
     enum BlobType
     {
-        DEFAULT
+        DEFAULT,
+        MAX
     };
 
     class Blob

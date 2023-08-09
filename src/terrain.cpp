@@ -68,16 +68,37 @@ namespace organic
 
         for (std::vector<Chunk>::iterator chunk = m_chunks.begin(); chunk != m_chunks.end();)
         {
-            for (int j = 0; j < BLOBS_IN_CHUNK; j++)
+            // Select LOD based on distance
+            // TODO: use chunk screen size instead?
+            int lodLevel = 0;
+            float chunkDistance = chunk->Distance(context->camPosition);
+
+            if (chunkDistance > FAR_PLANE * 0.8f)
+                lodLevel = 4;
+            else if (chunkDistance > FAR_PLANE * 0.6f)
+                lodLevel = 3;
+            else if (chunkDistance > FAR_PLANE * 0.4f)
+                lodLevel = 2;
+            else if (chunkDistance > FAR_PLANE * 0.2f)
+                lodLevel = 1;
+
+            int blobCount = BLOBS_IN_CHUNK / pow(8, lodLevel);
+            Blob* blobArrays[] = {
+                chunk->blobs, chunk->lod1Blobs, chunk->lod2Blobs, chunk->lod3Blobs, chunk->lod4Blobs,
+            };
+            Blob* blobs = blobArrays[lodLevel];
+
+            // Check and add blobs from selected LOD
+            for (int j = 0; j < blobCount; j++)
             {
                 // Distance cull
-                if (distance(chunk->blobs[j].Position, context->camPosition) > FAR_PLANE + chunk->blobs[j].Radius)
+                if (distance(blobs[j].Position, context->camPosition) > FAR_PLANE + blobs[j].Radius)
                     continue;
 
-                // TODO: frustrum cull
-                // TODO: occlusion cull
+                // TODO: frustrum cull blobs? might be slower with already frustrum culled chunks
+                // TODO: occlusion cull blobs
 
-                m_visibleBlobs.push_back(&chunk->blobs[j]);
+                m_visibleBlobs.push_back(&blobs[j]);
             }
             chunk++;
         }
@@ -102,12 +123,15 @@ namespace organic
 
         if (savedChunk)
         {
+            DownsampleChunk(savedChunk);
             m_chunks.push_back(*savedChunk);
             delete savedChunk;
         }
         else
         {
-            m_chunks.push_back(GenerateChunk(chunkX, chunkZ));
+            Chunk chunk = GenerateChunk(chunkX, chunkZ);
+            DownsampleChunk(&chunk);
+            m_chunks.push_back(chunk);
         }
     }
 
@@ -166,5 +190,70 @@ namespace organic
         blob->Position.z = blobZ;
         blob->Radius = 0.5f;
         blob->Type = BlobType::DEFAULT;
+    }
+
+    void Terrain::DownsampleChunk(Chunk* chunk)
+    {
+        // TODO perf: when editing,
+        // we shouldn't have to update the whole chunk.
+        // just update the affected areas.
+
+        int width = CHUNK_SIZE;
+        int height = MAX_HEIGHT;
+        float blobRadius = 1.0f;
+        Blob* blobs[] = {
+            chunk->blobs, chunk->lod1Blobs, chunk->lod2Blobs, chunk->lod3Blobs, chunk->lod4Blobs,
+        };
+
+        for (int level = 0; level < 4; level++)
+        {
+            Blob* sourceLod = blobs[level];
+            Blob* targetLod = blobs[level + 1];
+
+            for (int y = 0; y < height; y += 2)
+            {
+                for (int z = 0; z < width; z += 2)
+                {
+                    for (int x = 0; x < width; x += 2)
+                    {
+                        int sourceIndex = (width * width * y) + (width * z) + x;
+                        int targetIndex = (width * width * y / 8) + (width * z / 4) + x / 2;
+                        int sourceTypeCount[BlobType::MAX];
+
+                        for (int yD = 0; yD < 2; yD++)
+                        {
+                            for (int zD = 0; zD < 2; zD++)
+                            {
+                                for (int xD = 0; xD < 2; xD++)
+                                {
+                                    int index = sourceIndex + (width * width * yD) + (width * zD) + xD;
+                                    Blob sourceBlob = sourceLod[index];
+                                    sourceTypeCount[sourceBlob.Type]++;
+                                }
+                            }
+                        }
+
+                        BlobType mostCommonType = BlobType::DEFAULT;
+                        for (int t = 1; t < BlobType::MAX; t++)
+                        {
+                            if (sourceTypeCount[t] > sourceTypeCount[mostCommonType])
+                            {
+                                mostCommonType = (BlobType)t;
+                            }
+                        }
+
+                        targetLod[targetIndex].Radius = blobRadius;
+                        targetLod[targetIndex].Type = mostCommonType;
+                        targetLod[targetIndex].Position.x = sourceLod[sourceIndex].Position.x + blobRadius * 0.5f;
+                        targetLod[targetIndex].Position.y = sourceLod[sourceIndex].Position.y + blobRadius * 0.5f;
+                        targetLod[targetIndex].Position.z = sourceLod[sourceIndex].Position.z + blobRadius * 0.5f;
+                    }
+                }
+            }
+
+            width /= 2;
+            height /= 2;
+            blobRadius *= 2;
+        }
     }
 }

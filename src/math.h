@@ -18,6 +18,15 @@ namespace organic
                 this->z - other.z,
             };
         }
+
+        Vec3 operator+(const Vec3& other)
+        {
+            return {
+                this->x + other.x,
+                this->y + other.y,
+                this->z + other.z,
+            };
+        }
     };
 
     struct Vec4
