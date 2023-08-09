@@ -69,7 +69,6 @@ namespace organic
         for (std::vector<Chunk>::iterator chunk = m_chunks.begin(); chunk != m_chunks.end();)
         {
             // Select LOD based on distance
-            // TODO: use chunk screen size instead?
             int lodLevel = 0;
             float chunkDistance = chunk->Distance(context->camPosition);
 
@@ -97,6 +96,8 @@ namespace organic
 
                 // TODO: frustrum cull blobs? might be slower with already frustrum culled chunks
                 // TODO: occlusion cull blobs
+                // TODO: pre-calc pixel bounds for blobs and
+                // only check blobs near current pixel in fragment shader
 
                 m_visibleBlobs.push_back(&blobs[j]);
             }
