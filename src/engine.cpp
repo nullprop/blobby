@@ -272,5 +272,6 @@ namespace organic
         m_context.width = width;
         m_context.height = height;
         bgfx::reset(width, height, BGFX_RESET_VSYNC);
+        bgfx::setViewRect(0, 0, 0, width, height);
     }
 }
