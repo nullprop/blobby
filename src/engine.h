@@ -13,6 +13,8 @@ namespace organic
         void Loop();
 
       private:
+        void Resize(int width, int height);
+
         Context m_context;
     };
 }

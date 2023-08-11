@@ -1,4 +1,5 @@
 #include <bgfx/bgfx.h>
+#include <bgfx/defines.h>
 #include <bgfx/platform.h>
 #include <bx/math.h>
 #include <bx/timer.h>
@@ -131,18 +132,31 @@ namespace organic
         m_context.deltaTime = float(frameTime / freq);
         m_context.time += m_context.timeScale * m_context.deltaTime;
 
-        for (SDL_Event current_event; SDL_PollEvent(&current_event) != 0;)
+        for (SDL_Event event; SDL_PollEvent(&event) != 0;)
         {
-            ImGui_ImplSDL2_ProcessEvent(&current_event);
-            if (current_event.type == SDL_QUIT)
+            ImGui_ImplSDL2_ProcessEvent(&event);
+            if (event.type == SDL_QUIT)
             {
                 m_context.quit = true;
                 break;
             }
 
-            if (current_event.type == SDL_KEYDOWN)
+            if (event.type == SDL_WINDOWEVENT)
             {
-                switch (current_event.key.keysym.scancode)
+                switch (event.window.event)
+                {
+                case SDL_WINDOWEVENT_SIZE_CHANGED:
+                    Resize(event.window.data1, event.window.data2);
+                    break;
+
+                default:
+                    break;
+                }
+            }
+
+            if (event.type == SDL_KEYDOWN)
+            {
+                switch (event.key.keysym.scancode)
                 {
                 case SDL_SCANCODE_ESCAPE:
                     m_context.quit = true;
@@ -181,9 +195,9 @@ namespace organic
                     break;
             }
 
-            if (current_event.type == SDL_KEYUP)
+            if (event.type == SDL_KEYUP)
             {
-                switch (current_event.key.keysym.scancode)
+                switch (event.key.keysym.scancode)
                 {
                 case SDL_SCANCODE_W:
                     m_context.keyFlags &= ~Keys::FORWARD;
@@ -215,12 +229,12 @@ namespace organic
                 }
             }
 
-            if (current_event.type == SDL_MOUSEMOTION)
+            if (event.type == SDL_MOUSEMOTION)
             {
-                m_context.camYaw -= float(current_event.motion.xrel) * m_context.sensitivity * 0.022f;
+                m_context.camYaw -= float(event.motion.xrel) * m_context.sensitivity * 0.022f;
                 m_context.camYaw = fmodf(m_context.camYaw, 360.0f);
 
-                m_context.camPitch -= float(current_event.motion.yrel) * m_context.sensitivity * 0.022f;
+                m_context.camPitch -= float(event.motion.yrel) * m_context.sensitivity * 0.022f;
                 m_context.camPitch = clamp(m_context.camPitch, -89.0f, 89.0f);
             }
         }
@@ -250,5 +264,13 @@ namespace organic
         bx::mtxMul(m_context.camTransform, camRotation, camTranslation);
 
         m_context.renderer->Loop(&m_context);
+    }
+
+    void Engine::Resize(int width, int height)
+    {
+        printf("Resizing to %dx%d", width, height);
+        m_context.width = width;
+        m_context.height = height;
+        bgfx::reset(width, height, BGFX_RESET_VSYNC);
     }
 }
