@@ -1,10 +1,9 @@
-#!/bin/bash
+#!/bin/sh
 
-$CONFIG=${1:-"debug"}
-$PLATFORM=${2:-"linux"}
+PLATFORM="${1:-"linux"}"
+CONFIG="${2:-"debug"}"
 
 ./compile-shaders.sh "$PLATFORM"
 
 ./configure-ninja.sh
-# cmake --build "build/$CONFIG-ninja"
-cmake --build "build/debug-ninja"
+cmake --build "build/$CONFIG-ninja"

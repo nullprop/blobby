@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/bin/sh
 
-PLATFORM=${1:-"linux"}
-ARGS=${2:-""}
+PLATFORM="${1:-"linux"}"
+ARGS="${2:-""}"
 
 # compile shaders
 
