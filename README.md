@@ -2,6 +2,8 @@
 
 Experimenting with SDFs.
 
+[![youtube demo video](http://img.youtube.com/vi/iAyRDgh6Sdw/0.jpg)](https://www.youtube.com/watch?v=iAyRDgh6Sdw)
+
 ## Compiling
 
 Only tested on 6.1.55-1-MANJARO.
