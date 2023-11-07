@@ -1,8 +1,31 @@
-# organic
+# blobby
+
+Experimenting with SDFs.
+
+## Compiling
+
+Only tested on 6.1.55-1-MANJARO.
+
+Dependencies: cmake, ninja, gcc/clang
+
+```sh
+./configure-ninja.sh
+./compile.sh
+```
+
+Run: `./build/debug-ninja/blobby`
 
 ## Credits
 
-Third-party code.
+Third-party code used.
+
+### Shaders
+
+SDF shapes from Inigo Quilez: https://iquilezles.org/articles/distfunctions/
+
+Color palette functions from Inigo Quilez: https://iquilezles.org/articles/palettes/
+
+Palettes generated with http://dev.thi.ng/gradients/
 
 ### sdl-bgfx-imgui-starter
 
