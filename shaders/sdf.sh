@@ -43,9 +43,13 @@ float get_dist(vec3 p)
 
     for (int i = 0; i < int(u_globals[1]); i++)
     {
+        // test wave
+        vec3 pos = u_positions[i].xyz;
+        pos.y += sin(mod(pos.x + pos.z, 16) * u_globals[0] * 0.5) * 0.3;
+
         float dist = sdf_sphere(
             p,
-            u_positions[i].xyz,
+            pos,
             u_positions[i].w
         );
         field = smooth_union(

@@ -2,16 +2,16 @@
 #include <common.sh>
 #include <sdf.sh>
 
-const float RIM_GRADIENT = 0.6;
+const float RIM_GRADIENT = 0.5;
 
 // https://iquilezles.org/articles/palettes/
 // http://dev.thi.ng/gradients/
 vec3 palette(float t)
 {
-    vec3 a = vec3(0.500, 0.500, 0.000);
-    vec3 b = vec3(0.500, 0.500, 0.000);
-    vec3 c = vec3(0.100, 0.500, 0.000);
-    vec3 d = vec3(0.000, 0.000, 0.000);
+    vec3 a = vec3(0.500, 0.500, 0.500);
+    vec3 b = vec3(0.500, 0.500, 0.500);
+    vec3 c = vec3(1.000, 1.000, 1.000);
+    vec3 d = vec3(0.000, 0.333, 0.666);
 
     return a + b*cos(6.28318*(c*t+d));
 }
@@ -28,9 +28,9 @@ void main()
     vec3 n = get_normal(ray);
 
     // color gradient
-    float f = dot(-pixel_dir.xyz, n) * RIM_GRADIENT;
-
-    vec3 col = palette(1.0 - f) * alpha;
+    float rim = pow(dot(-pixel_dir.xyz, n), RIM_GRADIENT);
+    vec3 base = palette(u_globals[0] * 0.1 + d * 0.1);
+    vec3 col = base * rim * alpha;
 
     gl_FragColor = vec4(col, 1.0);
 }
