@@ -94,6 +94,10 @@ namespace organic
                 if (distance(blobs[j].Position, context->camPosition) > FAR_PLANE + blobs[j].Radius)
                     continue;
 
+                // Cull empty air
+                if (blobs[j].Type == BlobType::AIR)
+                    continue;
+
                 // TODO: frustrum cull blobs? might be slower with already frustrum culled chunks
                 // TODO: occlusion cull blobs
                 // TODO: pre-calc pixel bounds for blobs and
@@ -190,7 +194,7 @@ namespace organic
         blob->Position.y = blobY;
         blob->Position.z = blobZ;
         blob->Radius = 0.5f;
-        blob->Type = BlobType::DEFAULT;
+        blob->Type = blobY > 0 ? BlobType::AIR : BlobType::GROUND;
     }
 
     void Terrain::DownsampleChunk(Chunk* chunk)
@@ -234,8 +238,8 @@ namespace organic
                             }
                         }
 
-                        BlobType mostCommonType = BlobType::DEFAULT;
-                        for (int t = 1; t < BlobType::MAX; t++)
+                        BlobType mostCommonType = BlobType::GROUND;
+                        for (int t = BlobType::GROUND + 1; t < BlobType::MAX; t++)
                         {
                             if (sourceTypeCount[t] > sourceTypeCount[mostCommonType])
                             {
