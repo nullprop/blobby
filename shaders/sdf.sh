@@ -45,7 +45,8 @@ float get_dist(vec3 p)
     {
         // test wave
         vec3 pos = u_positions[i].xyz;
-        pos.y += sin(mod(pos.x + pos.z, 16) * u_globals[0] * 0.5) * 0.3;
+        pos.y += sin(mod(pos.x + pos.z, 16) * u_globals[0] * 0.5) * 0.3 +
+            cos(pos.x * u_globals[0] * 0.1);
 
         float dist = sdf_sphere(
             p,
