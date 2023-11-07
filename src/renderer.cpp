@@ -11,7 +11,7 @@
 #include "file-ops.h"
 #include "renderer.h"
 
-namespace organic
+namespace blobby
 {
     static bgfx::ShaderHandle create_shader(const std::string& shader, const char* name)
     {
@@ -21,7 +21,7 @@ namespace organic
         return handle;
     }
 
-    static organic::Vec3 screen_vertices[] = {
+    static blobby::Vec3 screen_vertices[] = {
         {-1.0f, -1.0f, 0.0f}, // tl
         {1.0f, -1.0f, 0.0f},  // tr
         {1.0f, 1.0f, 0.0f},   // br

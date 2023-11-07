@@ -2,7 +2,7 @@
 
 #include "context.h"
 
-namespace organic
+namespace blobby
 {
     class Engine
     {

@@ -2,7 +2,7 @@
 
 #include "math.h"
 
-namespace organic
+namespace blobby
 {
     enum BlobType
     {

@@ -10,7 +10,7 @@
 #define MAX_HEIGHT 128
 #define BLOBS_IN_CHUNK (MAX_HEIGHT * CHUNK_SIZE * CHUNK_SIZE)
 
-namespace organic
+namespace blobby
 {
     struct Chunk
     {

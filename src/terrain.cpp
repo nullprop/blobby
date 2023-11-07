@@ -4,7 +4,7 @@
 #include "constants.h"
 #include "terrain.h"
 
-namespace organic
+namespace blobby
 {
     Terrain::Terrain(int seed)
     {

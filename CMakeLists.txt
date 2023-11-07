@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.24)
 
 option(SUPERBUILD "Perform a superbuild (or not)" OFF)
 
-project(organic LANGUAGES CXX)
+project(blobby LANGUAGES CXX)
 
 if (SUPERBUILD)
   set(THIRD_PARTY_BUILD_DIR_NAME build)

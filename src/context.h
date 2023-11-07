@@ -4,7 +4,7 @@
 
 #include "math.h"
 
-namespace organic
+namespace blobby
 {
     class Renderer;
     class Terrain;

@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-namespace organic
+namespace blobby
 {
     struct Vec3
     {

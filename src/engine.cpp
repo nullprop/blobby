@@ -22,7 +22,7 @@
 #include "sdl-imgui/imgui_impl_sdl2.h"
 #include "terrain.h"
 
-namespace organic
+namespace blobby
 {
     Engine::Engine()
     {
@@ -35,7 +35,7 @@ namespace organic
             throw("Failed to create Engine");
         }
 
-        SDL_Window* window = SDL_CreateWindow("organic", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width,
+        SDL_Window* window = SDL_CreateWindow("blobby", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width,
                                               height, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
 
         if (window == nullptr)
