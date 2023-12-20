@@ -6,12 +6,13 @@ Experimenting with SDFs.
 
 ## Compiling
 
-Only tested on 6.1.55-1-MANJARO.
+### Linux
 
 Dependencies: cmake, ninja, gcc/clang
 
 ```sh
 ./configure-ninja.sh
+./compile-shaders.sh
 ./compile.sh
 ```
 
